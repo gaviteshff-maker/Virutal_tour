@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Enhanced Virtual Campus</title>
+<meta charset="UTF-8">
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+<script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { 
+  margin: 0; 
+  overflow: hidden; 
+  background: #000; 
+  font-family: 'Outfit', sans-serif;
+}
+
+#welcome-popup {
+  position: fixed; 
+  inset: 0; 
+  background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95));
+  backdrop-filter: blur(10px);
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  z-index: 2000;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+#popup-content {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  padding: 50px;
+  border-radius: 24px;
+  width: 520px;
+  text-align: center;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+#popup-content h2 {
+  color: #f1f5f9;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  letter-spacing: -0.5px;
+}
+
+#popup-content ul {
+  text-align: left;
+  color: #cbd5e1;
+  font-size: 16px;
+  line-height: 2;
+  list-style: none;
+  margin-bottom: 30px;
+}
+
+#popup-content ul li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+#popup-content ul li:last-child {
+  border-bottom: none;
+}
+
+#popup-content ul li strong {
+  color: #60a5fa;
+  font-weight: 600;
+  display: inline-block;
+  width: 140px;
+}
+
+#popup-content button {
+  margin-top: 20px;
+  padding: 16px 48px;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  font-family: 'Outfit', sans-serif;
+}
+
+#popup-content button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+#ui {
+  position: fixed;
+  bottom: 30px;
+  left: 30px;
+  z-index: 999;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 600px;
+}
+
+.fly-btn, select {
+  padding: 14px 24px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(10px);
+  color: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.fly-btn:hover, select:hover {
+  background: rgba(51, 65, 85, 0.95);
+  border-color: #60a5fa;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f1f5f9' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+}
+
+#info-panel {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 12px;
+  color: #f1f5f9;
+  font-size: 14px;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  z-index: 998;
+  min-width: 200px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+#info-panel h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #60a5fa;
+  font-weight: 700;
+}
+
+#info-panel p {
+  margin: 8px 0;
+  opacity: 0.9;
+}
+
+#minimap-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 240px;
+  height: 240px;
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  overflow: hidden;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+#minimap {
+  width: 100%;
+  height: 100%;
+}
+
+.active-flight {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border-color: #34d399 !important;
+}
+
+.night-mode {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
+  border-color: #a78bfa !important;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Welcome Popup -->
+<div id="welcome-popup">
+  <div id="popup-content">
+    <h2>🎓 Virtual Campus Tour</h2>
+    <ul>
+      <li><strong>Click Screen</strong> — Enable controls (important!)</li>
+      <li><strong>WASD</strong> — Move around</li>
+      <li><strong>SHIFT</strong> — Sprint faster</li>
+      <li><strong>Mouse</strong> — Look around</li>
+      <li><strong>P or Button</strong> — Toggle flight mode</li>
+      <li><strong>SPACE / X</strong> — Fly up / down</li>
+      <li><strong>ESC</strong> — Release mouse cursor</li>
+    </ul>
+    <button onclick="closePopup()">ENTER CAMPUS</button>
+  </div>
+</div>
+
+<!-- UI Controls -->
+<div id="ui">
+  <button id="flyBtn" class="fly-btn" onclick="toggleFly()">🚀 ENABLE FLIGHT</button>
+  <button id="dayBtn" class="fly-btn" onclick="toggleDayNight()">☀️ DAY MODE</button>
+  <select onchange="teleport(this.value)">
+    <option value="">📍 TELEPORT TO...</option>
+    <option value="150 1.6 -100">Block A (Academic)</option>
+    <option value="-20 1.6 -40">Block B (Labs)</option>
+    <option value="100 1.6 80">Block C (Library)</option>
+    <option value="100 1.6 -10">Workshop</option>
+    <option value="-20 1.6 120">Girls Hostel</option>
+    <option value="230 1.6 150">Boys Hostel</option>
+    <option value="200 1.6 40">Sports Ground</option>
+    <option value="270 1.6 -150">Main Gate</option>
+  </select>
+</div>
+
+<!-- Info Panel -->
+<div id="info-panel">
+  <h3>Campus Info</h3>
+  <p id="location-info">Location: Main Gate</p>
+  <p id="building-info">Building: None</p>
+  <p style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(148, 163, 184, 0.3); color: #fbbf24; font-weight: 600;">💡 Click screen to move!</p>
+</div>
+
+<!-- Minimap -->
+<div id="minimap-container">
+  <canvas id="minimap" width="240" height="240"></canvas>
+</div>
+
+<!-- A-Frame Scene -->
+<a-scene id="scene" fog="type: exponential; color: #87CEEB; density: 0.0003">
+
+  <a-assets>
+    <!-- Mixins for reusable components -->
+    <a-mixin id="road" geometry="primitive: plane" material="color: #2d3748; roughness: 0.9"></a-mixin>
+    <a-mixin id="labelText" look-at="#player-cam" align="center" color="#1a202c"></a-mixin>
+    <a-mixin id="window" geometry="primitive: plane" material="color: #60a5fa; opacity: 0.7; transparent: true"></a-mixin>
+    <a-mixin id="door" geometry="primitive: box" material="color: #78350f"></a-mixin>
+    <a-mixin id="tree-trunk" geometry="primitive: cylinder; height: 4; radius: 0.3" material="color: #78350f"></a-mixin>
+    <a-mixin id="tree-foliage" geometry="primitive: sphere; radius: 2.5" material="color: #16a34a"></a-mixin>
+  </a-assets>
+
+  <!-- PLAYER RIG -->
+  <a-entity id="rig" position="270 1.6 -150" movement-controls="speed: 0.8; fly: false; constrainToNavMesh: false">
+    <a-camera id="player-cam" look-controls="pointerLockEnabled: true">
+      <a-cursor color="#60a5fa"></a-cursor>
+    </a-camera>
+  </a-entity>
+
+  <!-- ENVIRONMENT -->
+  <a-sky id="sky" color="#87CEEB"></a-sky>
+  <a-light id="ambient" type="ambient" intensity="0.8" color="#ffffff"></a-light>
+  <a-light id="sun" type="directional" position="50 100 30" intensity="0.7" color="#fef3c7"></a-light>
+  
+  <!-- Ground -->
+  <a-plane rotation="-90 0 0" width="2000" height="2000" color="#84cc16" material="roughness: 0.9"></a-plane>
+
+  <!-- ROAD NETWORK -->
+  <a-entity position="0 0.02 0">
+    <!-- Main road -->
+    <a-entity mixin="road" rotation="-90 0 0" scale="250 10 1" position="150 0 -150"></a-entity>
+    <a-entity mixin="road" rotation="-90 0 0" scale="10 400 1" position="270 0 0"></a-entity>
+    <a-entity mixin="road" rotation="-90 0 0" scale="10 200 1" position="240 0 -40"></a-entity>
+    <a-entity mixin="road" rotation="-90 0 0" scale="150 10 1" position="100 0 30"></a-entity>
+    <a-entity mixin="road" rotation="-90 0 0" scale="10 260 1" position="40 0 10"></a-entity>
+    
+    <!-- Road markings -->
+    <a-entity position="150 0.05 -150">
+      <a-box width="2" height="0.1" depth="0.5" position="-40 0 0" color="#fbbf24"></a-box>
+      <a-box width="2" height="0.1" depth="0.5" position="-20 0 0" color="#fbbf24"></a-box>
+      <a-box width="2" height="0.1" depth="0.5" position="0 0 0" color="#fbbf24"></a-box>
+      <a-box width="2" height="0.1" depth="0.5" position="20 0 0" color="#fbbf24"></a-box>
+      <a-box width="2" height="0.1" depth="0.5" position="40 0 0" color="#fbbf24"></a-box>
+    </a-entity>
+  </a-entity>
+
+  <!-- BLOCK A - Academic Building -->
+  <a-entity id="blockA" position="150 0 -100" class="building">
+    <!-- Exterior Walls (with gap for door) -->
+    <!-- Front wall - left side -->
+    <a-box width="78" height="12" depth="1" position="-41 6 40" color="#e0f2fe" material="roughness: 0.5"></a-box>
+    <!-- Front wall - right side -->
+    <a-box width="78" height="12" depth="1" position="41 6 40" color="#e0f2fe" material="roughness: 0.5"></a-box>
+    <!-- Front wall - top (above door) -->
+    <a-box width="4" height="6.5" depth="1" position="0 9.25 40" color="#e0f2fe" material="roughness: 0.5"></a-box>
+    
+    <!-- Back wall -->
+    <a-box width="160" height="12" depth="1" position="0 6 -40" color="#e0f2fe" material="roughness: 0.5"></a-box>
+    <!-- Side walls -->
+    <a-box width="1" height="12" depth="80" position="-80 6 0" color="#e0f2fe" material="roughness: 0.5"></a-box>
+    <a-box width="1" height="12" depth="80" position="80 6 0" color="#e0f2fe" material="roughness: 0.5"></a-box>
+    
+    <!-- Roof -->
+    <a-box width="162" height="0.8" depth="82" position="0 12.4 0" color="#0284c7"></a-box>
+    
+    <!-- Floor -->
+    <a-box width="160" height="0.2" depth="80" position="0 0.1 0" color="#f1f5f9"></a-box>
+    
+    <!-- Windows - Front -->
+    <a-entity position="0 0 40.5">
+      <a-plane mixin="window" width="3" height="2" position="-60 3 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="-40 3 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="-20 3 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="20 3 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="40 3 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="60 3 0"></a-plane>
+      
+      <a-plane mixin="window" width="3" height="2" position="-60 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="-40 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="-20 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="20 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="40 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="60 8 0"></a-plane>
+    </a-entity>
+    
+    <!-- Door Frame (open entrance) -->
+    <a-box width="0.3" height="5.5" depth="0.5" position="-2 2.75 40.3" color="#92400e"></a-box>
+    <a-box width="0.3" height="5.5" depth="0.5" position="2 2.75 40.3" color="#92400e"></a-box>
+    <a-box width="4.6" height="0.3" depth="0.5" position="0 5.5 40.3" color="#92400e"></a-box>
+    <a-box width="5" height="1" depth="0.5" position="0 6 40.3" color="#1e40af"></a-box>
+    
+    <!-- INTERIOR - Entrance Hall -->
+    <a-entity position="0 0 30">
+      <!-- Reception Desk -->
+      <a-box width="8" height="2" depth="3" position="0 1 0" color="#64748b"></a-box>
+      <a-text value="RECEPTION" position="0 2.5 1.6" align="center" color="#1e293b" scale="2 2 2"></a-text>
+      
+      <!-- Chairs -->
+      <a-box width="1.5" height="1" depth="1.5" position="-10 0.5 0" color="#3b82f6"></a-box>
+      <a-box width="1.5" height="1" depth="1.5" position="-10 0.5 3" color="#3b82f6"></a-box>
+      <a-box width="1.5" height="1" depth="1.5" position="10 0.5 0" color="#3b82f6"></a-box>
+      <a-box width="1.5" height="1" depth="1.5" position="10 0.5 3" color="#3b82f6"></a-box>
+      
+      <!-- Notice Board -->
+      <a-box width="6" height="4" depth="0.2" position="-15 3 -9.8" color="#1e293b"></a-box>
+      <a-text value="NOTICE BOARD" position="-15 5.5 -9.5" align="center" color="#fbbf24" scale="1.5 1.5 1.5"></a-text>
+    </a-entity>
+    
+    <!-- INTERIOR - Corridor -->
+    <a-entity position="0 0 0">
+      <!-- Corridor walls (interior divisions) -->
+      <a-box width="1" height="12" depth="50" position="0 6 -10" color="#cbd5e1" material="opacity: 0.3; transparent: true"></a-box>
+      
+      <!-- Classroom doors (visual only) -->
+      <a-box width="3" height="4" depth="0.2" position="-30 2 -10" color="#78350f"></a-box>
+      <a-text value="ROOM 101" position="-30 4.5 -9.8" align="center" color="#fff" scale="1.2 1.2 1.2"></a-text>
+      
+      <a-box width="3" height="4" depth="0.2" position="30 2 -10" color="#78350f"></a-box>
+      <a-text value="ROOM 102" position="30 4.5 -9.8" align="center" color="#fff" scale="1.2 1.2 1.2"></a-text>
+    </a-entity>
+    
+    <!-- INTERIOR - Classroom Left -->
+    <a-entity position="-40 0 -10">
+      <!-- Desks -->
+      <a-box width="4" height="1.5" depth="2" position="0 0.75 5" color="#92400e"></a-box>
+      <a-box width="4" height="1.5" depth="2" position="0 0.75 0" color="#92400e"></a-box>
+      <a-box width="4" height="1.5" depth="2" position="0 0.75 -5" color="#92400e"></a-box>
+      
+      <!-- Whiteboard -->
+      <a-box width="8" height="3" depth="0.1" position="0 3 -14.9" color="#f8fafc"></a-box>
+      <a-text value="CLASSROOM" position="0 5.5 -14.7" align="center" color="#1e293b" scale="1.5 1.5 1.5"></a-text>
+    </a-entity>
+    
+    <!-- INTERIOR - Classroom Right -->
+    <a-entity position="40 0 -10">
+      <!-- Desks -->
+      <a-box width="4" height="1.5" depth="2" position="0 0.75 5" color="#92400e"></a-box>
+      <a-box width="4" height="1.5" depth="2" position="0 0.75 0" color="#92400e"></a-box>
+      <a-box width="4" height="1.5" depth="2" position="0 0.75 -5" color="#92400e"></a-box>
+      
+      <!-- Whiteboard -->
+      <a-box width="8" height="3" depth="0.1" position="0 3 -14.9" color="#f8fafc"></a-box>
+      <a-text value="LAB" position="0 5.5 -14.7" align="center" color="#1e293b" scale="1.5 1.5 1.5"></a-text>
+    </a-entity>
+    
+    <!-- Label (outside) -->
+    <a-entity position="0 18 0">
+      <a-plane width="50" height="12" color="#fff" opacity="0.9" material="side: double"></a-plane>
+      <a-text value="BLOCK A\nACADEMIC BUILDING" scale="12 12 12" mixin="labelText" wrapCount="30"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <!-- BLOCK B - Laboratory Building -->
+  <a-entity id="blockB" position="-20 0 -40" class="building">
+    <!-- Exterior Walls with door gap -->
+    <!-- Side wall - front section -->
+    <a-box width="1" height="16" depth="70" position="35 8 35" color="#fef9c3" material="roughness: 0.5"></a-box>
+    <!-- Side wall - back section -->
+    <a-box width="1" height="16" depth="70" position="35 8 -35" color="#fef9c3" material="roughness: 0.5"></a-box>
+    <!-- Side wall - above door -->
+    <a-box width="1" height="10.5" depth="4" position="35 13.25 0" color="#fef9c3" material="roughness: 0.5"></a-box>
+    
+    <!-- Other walls -->
+    <a-box width="1" height="16" depth="160" position="-35 8 0" color="#fef9c3" material="roughness: 0.5"></a-box>
+    <a-box width="70" height="16" depth="1" position="0 8 80" color="#fef9c3" material="roughness: 0.5"></a-box>
+    <a-box width="70" height="16" depth="1" position="0 8 -80" color="#fef9c3" material="roughness: 0.5"></a-box>
+    
+    <!-- Roof -->
+    <a-box width="72" height="0.8" depth="162" position="0 16.4 0" color="#ca8a04"></a-box>
+    
+    <!-- Floor -->
+    <a-box width="70" height="0.2" depth="160" position="0 0.1 0" color="#fef3c7"></a-box>
+    
+    <!-- Windows - Side -->
+    <a-entity position="35.5 0 0" rotation="0 90 0">
+      <a-plane mixin="window" width="3" height="2" position="0 4 -60"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 4 -40"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 4 -20"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 4 20"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 4 40"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 4 60"></a-plane>
+      
+      <a-plane mixin="window" width="3" height="2" position="0 10 -60"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 10 -40"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 10 -20"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 10 20"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 10 40"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 10 60"></a-plane>
+    </a-entity>
+    
+    <!-- Door Frame (open entrance) -->
+    <a-box width="0.3" height="5.5" depth="0.5" position="35.3 2.75 -2" rotation="0 90 0" color="#92400e"></a-box>
+    <a-box width="0.3" height="5.5" depth="0.5" position="35.3 2.75 2" rotation="0 90 0" color="#92400e"></a-box>
+    <a-box width="4.6" height="0.3" depth="0.5" position="35.3 5.5 0" rotation="0 90 0" color="#92400e"></a-box>
+    
+    <!-- INTERIOR - Main Lab -->
+    <a-entity position="20 0 0">
+      <!-- Lab Benches -->
+      <a-box width="25" height="1.8" depth="3" position="0 0.9 -30" color="#1e293b"></a-box>
+      <a-box width="25" height="1.8" depth="3" position="0 0.9 -20" color="#1e293b"></a-box>
+      <a-box width="25" height="1.8" depth="3" position="0 0.9 -10" color="#1e293b"></a-box>
+      <a-box width="25" height="1.8" depth="3" position="0 0.9 0" color="#1e293b"></a-box>
+      <a-box width="25" height="1.8" depth="3" position="0 0.9 10" color="#1e293b"></a-box>
+      <a-box width="25" height="1.8" depth="3" position="0 0.9 20" color="#1e293b"></a-box>
+      
+      <!-- Equipment (beakers) -->
+      <a-cylinder height="1" radius="0.3" position="-8 2.8 -30" color="#60a5fa"></a-cylinder>
+      <a-cylinder height="1" radius="0.3" position="0 2.8 -30" color="#34d399"></a-cylinder>
+      <a-cylinder height="1" radius="0.3" position="8 2.8 -30" color="#f87171"></a-cylinder>
+      
+      <!-- Cabinets -->
+      <a-box width="5" height="4" depth="2" position="-30 2 -50" color="#64748b"></a-box>
+      <a-box width="5" height="4" depth="2" position="-30 2 50" color="#64748b"></a-box>
+    </a-entity>
+    
+    <!-- INTERIOR - Computer Lab -->
+    <a-entity position="-15 0 0">
+      <!-- Computer Desks -->
+      <a-box width="3" height="1.5" depth="2" position="0 0.75 -40" color="#475569"></a-box>
+      <a-box width="0.8" height="1" depth="0.1" position="0 2 -41" color="#1e293b"></a-box>
+      
+      <a-box width="3" height="1.5" depth="2" position="0 0.75 -30" color="#475569"></a-box>
+      <a-box width="0.8" height="1" depth="0.1" position="0 2 -31" color="#1e293b"></a-box>
+      
+      <a-box width="3" height="1.5" depth="2" position="0 0.75 -20" color="#475569"></a-box>
+      <a-box width="0.8" height="1" depth="0.1" position="0 2 -21" color="#1e293b"></a-box>
+      
+      <a-box width="3" height="1.5" depth="2" position="0 0.75 -10" color="#475569"></a-box>
+      <a-box width="0.8" height="1" depth="0.1" position="0 2 -11" color="#1e293b"></a-box>
+    </a-entity>
+    
+    <!-- Label (outside) -->
+    <a-entity position="0 22 0">
+      <a-plane width="60" height="12" color="#fff" opacity="0.9" material="side: double"></a-plane>
+      <a-text value="BLOCK B\nLABORATORY COMPLEX" scale="12 12 12" mixin="labelText" wrapCount="30"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <!-- BLOCK C - Library -->
+  <a-entity id="blockC" position="100 0 80" class="building">
+    <!-- Exterior Walls with door opening -->
+    <!-- Front wall - left -->
+    <a-box width="38" height="12" depth="1" position="-21 6 35" color="#d9f99d" material="roughness: 0.5"></a-box>
+    <!-- Front wall - right -->
+    <a-box width="38" height="12" depth="1" position="21 6 35" color="#d9f99d" material="roughness: 0.5"></a-box>
+    <!-- Front wall - above door -->
+    <a-box width="4" height="6.5" depth="1" position="0 9.25 35" color="#d9f99d" material="roughness: 0.5"></a-box>
+    
+    <!-- Back and side walls -->
+    <a-box width="80" height="12" depth="1" position="0 6 -35" color="#d9f99d" material="roughness: 0.5"></a-box>
+    <a-box width="1" height="12" depth="70" position="-40 6 0" color="#d9f99d" material="roughness: 0.5"></a-box>
+    <a-box width="1" height="12" depth="70" position="40 6 0" color="#d9f99d" material="roughness: 0.5"></a-box>
+    
+    <!-- Roof -->
+    <a-box width="82" height="0.8" depth="72" position="0 12.4 0" color="#65a30d"></a-box>
+    
+    <!-- Floor -->
+    <a-box width="80" height="0.2" depth="70" position="0 0.1 0" color="#fefce8"></a-box>
+    
+    <!-- Windows -->
+    <a-entity position="0 0 35.5">
+      <a-plane mixin="window" width="3" height="2" position="-30 3 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="-15 3 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="15 3 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="30 3 0"></a-plane>
+      
+      <a-plane mixin="window" width="3" height="2" position="-30 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="-15 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="0 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="15 8 0"></a-plane>
+      <a-plane mixin="window" width="3" height="2" position="30 8 0"></a-plane>
+    </a-entity>
+    
+    <!-- Entrance with pillars (open door) -->
+    <a-box width="0.8" height="6" depth="0.8" position="-3 3 35.5" color="#fff"></a-box>
+    <a-box width="0.8" height="6" depth="0.8" position="3 3 35.5" color="#fff"></a-box>
+    <a-box width="8" height="0.8" depth="1" position="0 6.5 35.5" color="#fff"></a-box>
+    
+    <!-- INTERIOR - Bookshelves -->
+    <a-entity position="0 0 0">
+      <!-- Left side bookshelves -->
+      <a-box width="15" height="5" depth="2" position="-25 2.5 -20" color="#78350f"></a-box>
+      <a-box width="15" height="5" depth="2" position="-25 2.5 -10" color="#78350f"></a-box>
+      <a-box width="15" height="5" depth="2" position="-25 2.5 0" color="#78350f"></a-box>
+      <a-box width="15" height="5" depth="2" position="-25 2.5 10" color="#78350f"></a-box>
+      
+      <!-- Right side bookshelves -->
+      <a-box width="15" height="5" depth="2" position="25 2.5 -20" color="#78350f"></a-box>
+      <a-box width="15" height="5" depth="2" position="25 2.5 -10" color="#78350f"></a-box>
+      <a-box width="15" height="5" depth="2" position="25 2.5 0" color="#78350f"></a-box>
+      <a-box width="15" height="5" depth="2" position="25 2.5 10" color="#78350f"></a-box>
+      
+      <!-- Central bookshelves -->
+      <a-box width="2" height="5" depth="30" position="0 2.5 -5" color="#78350f"></a-box>
+      
+      <!-- Books (colored rectangles on shelves) -->
+      <a-box width="0.5" height="2" depth="0.3" position="-25 3 -20" color="#ef4444"></a-box>
+      <a-box width="0.5" height="2" depth="0.3" position="-24 3 -20" color="#3b82f6"></a-box>
+      <a-box width="0.5" height="2" depth="0.3" position="-23 3 -20" color="#10b981"></a-box>
+      <a-box width="0.5" height="2" depth="0.3" position="-22 3 -20" color="#f59e0b"></a-box>
+    </a-entity>
+    
+    <!-- INTERIOR - Reading Area -->
+    <a-entity position="0 0 20">
+      <!-- Tables -->
+      <a-box width="8" height="1.5" depth="3" position="-10 0.75 0" color="#92400e"></a-box>
+      <a-box width="8" height="1.5" depth="3" position="10 0.75 0" color="#92400e"></a-box>
+      
+      <!-- Chairs -->
+      <a-box width="1.5" height="1" depth="1.5" position="-10 0.5 2" color="#65a30d"></a-box>
+      <a-box width="1.5" height="1" depth="1.5" position="-10 0.5 -2" color="#65a30d"></a-box>
+      <a-box width="1.5" height="1" depth="1.5" position="10 0.5 2" color="#65a30d"></a-box>
+      <a-box width="1.5" height="1" depth="1.5" position="10 0.5 -2" color="#65a30d"></a-box>
+      
+      <!-- Study lamps -->
+      <a-cylinder height="0.8" radius="0.2" position="-10 2.5 0" color="#fbbf24"></a-cylinder>
+      <a-cylinder height="0.8" radius="0.2" position="10 2.5 0" color="#fbbf24"></a-cylinder>
+    </a-entity>
+    
+    <!-- INTERIOR - Librarian Desk -->
+    <a-entity position="0 0 25">
+      <a-box width="6" height="2" depth="3" position="0 1 0" color="#475569"></a-box>
+      <a-text value="LIBRARIAN" position="0 2.5 1.6" align="center" color="#1e293b" scale="1.5 1.5 1.5"></a-text>
+    </a-entity>
+    
+    <!-- Label (outside) -->
+    <a-entity position="0 18 0">
+      <a-plane width="50" height="12" color="#fff" opacity="0.9" material="side: double"></a-plane>
+      <a-text value="BLOCK C\nCENTRAL LIBRARY" scale="12 12 12" mixin="labelText" wrapCount="30"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <!-- WORKSHOP -->
+  <a-entity id="workshop" position="100 0 -10" class="building">
+    <!-- Main structure -->
+    <a-box width="80" height="6" depth="45" color="#cbd5e1" material="roughness: 0.8; metalness: 0.3"></a-box>
+    <a-box width="82" height="0.5" depth="47" position="0 3.3 0" color="#64748b"></a-box>
+    
+    <!-- Large bay doors -->
+    <a-box width="12" height="5" depth="0.5" position="-25 2.5 22.5" color="#475569"></a-box>
+    <a-box width="12" height="5" depth="0.5" position="0 2.5 22.5" color="#475569"></a-box>
+    <a-box width="12" height="5" depth="0.5" position="25 2.5 22.5" color="#475569"></a-box>
+    
+    <!-- Ventilation -->
+    <a-box width="3" height="0.5" depth="3" position="0 5.8 0" color="#374151"></a-box>
+    
+    <!-- Label -->
+    <a-entity position="0 10 0">
+      <a-plane width="50" height="10" color="#fff" opacity="0.9" material="side: double"></a-plane>
+      <a-text value="WORKSHOP\n& FABRICATION LAB" scale="10 10 10" mixin="labelText" wrapCount="30"></a-text>
+    </a-entity>
+    
+    <!-- Roof -->
+    <a-box width="85" height="0.5" depth="50" position="0 6.5 0" color="#475569"></a-box>
+  </a-entity>
+
+  <!-- GIRLS HOSTEL -->
+  <a-entity id="girlsHostel" position="-20 0 120" class="building">
+    <!-- Main structure -->
+    <a-box width="70" height="16" depth="60" color="#fce7f3" material="roughness: 0.5"></a-box>
+    
+    <!-- Windows arranged in floors -->
+    <a-entity position="35.5 0 0" rotation="0 90 0">
+      <!-- Floor 1 -->
+      <a-plane mixin="window" width="2.5" height="2" position="0 3 -25"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 3 -12"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 3 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 3 12"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 3 25"></a-plane>
+      <!-- Floor 2 -->
+      <a-plane mixin="window" width="2.5" height="2" position="0 8 -25"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 8 -12"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 8 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 8 12"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 8 25"></a-plane>
+      <!-- Floor 3 -->
+      <a-plane mixin="window" width="2.5" height="2" position="0 13 -25"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 13 -12"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 13 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 13 12"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="0 13 25"></a-plane>
+    </a-entity>
+    
+    <!-- Entrance -->
+    <a-box mixin="door" width="3.5" height="4.5" depth="0.3" position="35.3 2.25 0" rotation="0 90 0" color="#92400e"></a-box>
+    <a-text value="GIRLS HOSTEL" position="35.5 7 0" rotation="0 -90 0" scale="2 2 2" color="#831843" align="center"></a-text>
+    
+    <!-- Label -->
+    <a-entity position="0 22 0">
+      <a-plane width="60" height="12" color="#fff" opacity="0.9" material="side: double"></a-plane>
+      <a-text value="GIRLS HOSTEL\nRESIDENTIAL BLOCK" scale="12 12 12" mixin="labelText" wrapCount="30"></a-text>
+    </a-entity>
+    
+    <!-- Roof -->
+    <a-box width="75" height="0.5" depth="65" position="0 16.5 0" color="#db2777"></a-box>
+  </a-entity>
+
+  <!-- BOYS HOSTEL -->
+  <a-entity id="boysHostel" position="230 0 150" class="building">
+    <!-- Main structure -->
+    <a-box width="90" height="20" depth="70" color="#dbeafe" material="roughness: 0.5"></a-box>
+    
+    <!-- Windows - multiple floors -->
+    <a-entity position="0 0 35.5">
+      <!-- Floor 1 -->
+      <a-plane mixin="window" width="2.5" height="2" position="-35 3 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="-20 3 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="-5 3 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="5 3 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="20 3 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="35 3 0"></a-plane>
+      <!-- Floor 2 -->
+      <a-plane mixin="window" width="2.5" height="2" position="-35 8 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="-20 8 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="-5 8 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="5 8 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="20 8 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="35 8 0"></a-plane>
+      <!-- Floor 3 -->
+      <a-plane mixin="window" width="2.5" height="2" position="-35 13 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="-20 13 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="-5 13 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="5 13 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="20 13 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="35 13 0"></a-plane>
+      <!-- Floor 4 -->
+      <a-plane mixin="window" width="2.5" height="2" position="-35 18 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="-20 18 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="-5 18 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="5 18 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="20 18 0"></a-plane>
+      <a-plane mixin="window" width="2.5" height="2" position="35 18 0"></a-plane>
+    </a-entity>
+    
+    <!-- Entrance -->
+    <a-box mixin="door" width="4" height="5" depth="0.3" position="0 2.5 35.3" color="#92400e"></a-box>
+    <a-text value="BOYS HOSTEL" position="0 7 35.5" scale="2.5 2.5 2.5" color="#1e3a8a" align="center"></a-text>
+    
+    <!-- Label -->
+    <a-entity position="0 26 0">
+      <a-plane width="60" height="12" color="#fff" opacity="0.9" material="side: double"></a-plane>
+      <a-text value="BOYS HOSTEL\nRESIDENTIAL BLOCK" scale="12 12 12" mixin="labelText" wrapCount="30"></a-text>
+    </a-entity>
+    
+    <!-- Roof -->
+    <a-box width="95" height="0.5" depth="75" position="0 20.5 0" color="#1e40af"></a-box>
+  </a-entity>
+
+  <!-- SPORTS GROUND -->
+  <a-entity id="ground" position="200 0 40">
+    <!-- Main field -->
+    <a-box width="100" height="0.3" depth="140" color="#16a34a" material="roughness: 0.9"></a-box>
+    
+    <!-- Track around field -->
+    <a-entity position="0 0.35 0">
+      <a-ring radius-inner="70" radius-outer="75" position="0 0 0" rotation="-90 0 0" color="#dc2626"></a-ring>
+    </a-entity>
+    
+    <!-- Goal posts -->
+    <a-entity position="-45 0 0">
+      <a-box width="0.3" height="4" depth="0.3" position="0 2 -30" color="#fff"></a-box>
+      <a-box width="0.3" height="4" depth="0.3" position="0 2 30" color="#fff"></a-box>
+      <a-box width="0.3" height="0.3" depth="60" position="0 4 0" color="#fff"></a-box>
+    </a-entity>
+    <a-entity position="45 0 0">
+      <a-box width="0.3" height="4" depth="0.3" position="0 2 -30" color="#fff"></a-box>
+      <a-box width="0.3" height="4" depth="0.3" position="0 2 30" color="#fff"></a-box>
+      <a-box width="0.3" height="0.3" depth="60" position="0 4 0" color="#fff"></a-box>
+    </a-entity>
+    
+    <!-- Bleachers -->
+    <a-entity position="-52 0 0">
+      <a-box width="2" height="2" depth="100" color="#6b7280"></a-box>
+      <a-box width="2" height="4" depth="100" position="1.5 1 0" color="#6b7280"></a-box>
+      <a-box width="2" height="6" depth="100" position="3 2 0" color="#6b7280"></a-box>
+    </a-entity>
+    
+    <!-- Label -->
+    <a-entity position="0 12 0">
+      <a-plane width="60" height="10" color="#fff" opacity="0.9" material="side: double"></a-plane>
+      <a-text value="SPORTS GROUND\nATHLETICS TRACK" scale="11 11 11" mixin="labelText" wrapCount="30"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <!-- MAIN GATE -->
+  <a-entity id="mainGate" position="270 0 -180">
+    <!-- Gate pillars -->
+    <a-box width="3" height="8" depth="3" position="-12 4 0" color="#1f2937"></a-box>
+    <a-box width="3" height="8" depth="3" position="12 4 0" color="#1f2937"></a-box>
+    
+    <!-- Gate top -->
+    <a-box width="30" height="0.8" depth="3" position="0 8 0" color="#1f2937"></a-box>
+    
+    <!-- Sign -->
+    <a-entity position="0 10 0">
+      <a-plane width="40" height="8" color="#1e40af" opacity="0.95"></a-plane>
+      <a-text value="VIRTUAL CAMPUS\nWELCOME" scale="8 8 8" color="#fff" align="center"></a-text>
+    </a-entity>
+    
+    <!-- Gate frame -->
+    <a-box width="24" height="6" depth="0.5" position="0 3 0" color="#374151" material="opacity: 0.7; transparent: true"></a-box>
+  </a-entity>
+
+  <!-- TREES - scattered around campus -->
+  <a-entity id="trees">
+    <!-- Near Block A -->
+    <a-entity position="220 0 -100">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    <a-entity position="80 0 -100">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    
+    <!-- Near Block B -->
+    <a-entity position="-60 0 -40">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    <a-entity position="-60 0 40">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    
+    <!-- Near Block C -->
+    <a-entity position="150 0 80">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    <a-entity position="50 0 80">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    
+    <!-- Near hostels -->
+    <a-entity position="-60 0 120">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    <a-entity position="190 0 150">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    <a-entity position="270 0 150">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    
+    <!-- Along main road -->
+    <a-entity position="270 0 -100">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    <a-entity position="270 0 -50">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    <a-entity position="270 0 50">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+    <a-entity position="270 0 100">
+      <a-cylinder mixin="tree-trunk"></a-cylinder>
+      <a-sphere mixin="tree-foliage" position="0 4 0"></a-sphere>
+    </a-entity>
+  </a-entity>
+
+  <!-- BENCHES -->
+  <a-entity id="benches">
+    <a-entity position="180 0 -100">
+      <a-box width="3" height="0.8" depth="0.8" position="0 0.4 0" color="#78350f"></a-box>
+      <a-box width="3" height="0.1" depth="1" position="0 0.9 -0.3" color="#78350f"></a-box>
+    </a-entity>
+    <a-entity position="120 0 -100">
+      <a-box width="3" height="0.8" depth="0.8" position="0 0.4 0" color="#78350f"></a-box>
+      <a-box width="3" height="0.1" depth="1" position="0 0.9 -0.3" color="#78350f"></a-box>
+    </a-entity>
+    <a-entity position="100 0 50">
+      <a-box width="3" height="0.8" depth="0.8" position="0 0.4 0" color="#78350f"></a-box>
+      <a-box width="3" height="0.1" depth="1" position="0 0.9 -0.3" color="#78350f"></a-box>
+    </a-entity>
+  </a-entity>
+
+  <!-- LAMP POSTS -->
+  <a-entity id="lamps">
+    <a-entity position="150 0 -150">
+      <a-cylinder height="8" radius="0.2" color="#2d3748"></a-cylinder>
+      <a-sphere radius="0.6" position="0 8 0" color="#fbbf24" material="emissive: #fbbf24; emissiveIntensity: 0.5"></a-sphere>
+    </a-entity>
+    <a-entity position="270 0 -150">
+      <a-cylinder height="8" radius="0.2" color="#2d3748"></a-cylinder>
+      <a-sphere radius="0.6" position="0 8 0" color="#fbbf24" material="emissive: #fbbf24; emissiveIntensity: 0.5"></a-sphere>
+    </a-entity>
+    <a-entity position="240 0 -80">
+      <a-cylinder height="8" radius="0.2" color="#2d3748"></a-cylinder>
+      <a-sphere radius="0.6" position="0 8 0" color="#fbbf24" material="emissive: #fbbf24; emissiveIntensity: 0.5"></a-sphere>
+    </a-entity>
+    <a-entity position="240 0 0">
+      <a-cylinder height="8" radius="0.2" color="#2d3748"></a-cylinder>
+      <a-sphere radius="0.6" position="0 8 0" color="#fbbf24" material="emissive: #fbbf24; emissiveIntensity: 0.5"></a-sphere>
+    </a-entity>
+    <a-entity position="240 0 80">
+      <a-cylinder height="8" radius="0.2" color="#2d3748"></a-cylinder>
+      <a-sphere radius="0.6" position="0 8 0" color="#fbbf24" material="emissive: #fbbf24; emissiveIntensity: 0.5"></a-sphere>
+    </a-entity>
+  </a-entity>
+
+</a-scene>
+
+<script>
+let fly = false;
+let night = false;
+
+const rig = document.querySelector("#rig");
+const sky = document.querySelector("#sky");
+const ambient = document.querySelector("#ambient");
+const sun = document.querySelector("#sun");
+const scene = document.querySelector("#scene");
+const flyBtn = document.querySelector("#flyBtn");
+const dayBtn = document.querySelector("#dayBtn");
+const locationInfo = document.querySelector("#location-info");
+const buildingInfo = document.querySelector("#building-info");
+
+// Minimap
+const canvas = document.getElementById("minimap");
+const ctx = canvas.getContext("2d");
+
+function closePopup() {
+  document.getElementById("welcome-popup").style.display = "none";
+}
+
+function toggleFly() {
+  fly = !fly;
+  rig.setAttribute("movement-controls", `speed: ${fly ? 1.5 : 0.8}; fly: ${fly}`);
+  flyBtn.innerText = fly ? "🛬 DISABLE FLIGHT" : "🚀 ENABLE FLIGHT";
+  flyBtn.classList.toggle("active-flight", fly);
+}
+
+function toggleDayNight() {
+  night = !night;
+  
+  if (night) {
+    sky.setAttribute("color", "#0f172a");
+    ambient.setAttribute("intensity", "0.2");
+    sun.setAttribute("intensity", "0.1");
+    sun.setAttribute("color", "#cbd5e1");
+    scene.setAttribute("fog", "color: #0f172a; density: 0.001");
+    dayBtn.innerText = "🌙 NIGHT MODE";
+  } else {
+    sky.setAttribute("color", "#87CEEB");
+    ambient.setAttribute("intensity", "0.8");
+    sun.setAttribute("intensity", "0.7");
+    sun.setAttribute("color", "#fef3c7");
+    scene.setAttribute("fog", "color: #87CEEB; density: 0.0003");
+    dayBtn.innerText = "☀️ DAY MODE";
+  }
+  
+  dayBtn.classList.toggle("night-mode", night);
+}
+
+function teleport(pos) {
+  if (!pos) return;
+  const [x, y, z] = pos.split(" ").map(Number);
+  rig.object3D.position.set(x, y, z);
+}
+
+// Update location info
+function updateLocationInfo() {
+  const pos = rig.object3D.position;
+  locationInfo.textContent = `Position: (${Math.round(pos.x)}, ${Math.round(pos.z)})`;
+  
+  // Check proximity to buildings
+  const buildings = [
+    { name: "Block A", pos: { x: 150, z: -100 }, range: 50 },
+    { name: "Block B", pos: { x: -20, z: -40 }, range: 45 },
+    { name: "Block C", pos: { x: 100, z: 80 }, range: 45 },
+    { name: "Workshop", pos: { x: 100, z: -10 }, range: 35 },
+    { name: "Girls Hostel", pos: { x: -20, z: 120 }, range: 40 },
+    { name: "Boys Hostel", pos: { x: 230, z: 150 }, range: 50 },
+    { name: "Sports Ground", pos: { x: 200, z: 40 }, range: 75 },
+    { name: "Main Gate", pos: { x: 270, z: -180 }, range: 30 }
+  ];
+  
+  let nearBuilding = "None";
+  for (const building of buildings) {
+    const dist = Math.sqrt(
+      Math.pow(pos.x - building.pos.x, 2) + 
+      Math.pow(pos.z - building.pos.z, 2)
+    );
+    if (dist < building.range) {
+      nearBuilding = building.name;
+      break;
+    }
+  }
+  
+  buildingInfo.textContent = `Near: ${nearBuilding}`;
+}
+
+// Draw minimap
+function drawMinimap() {
+  const pos = rig.object3D.position;
+  
+  // Clear canvas
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(0, 0, 240, 240);
+  
+  // Draw buildings
+  const buildings = [
+    { x: 150, z: -100, w: 160, h: 80, color: "#3b82f6" },
+    { x: -20, z: -40, w: 70, h: 160, color: "#eab308" },
+    { x: 100, z: 80, w: 80, h: 70, color: "#84cc16" },
+    { x: 100, z: -10, w: 80, h: 45, color: "#64748b" },
+    { x: -20, z: 120, w: 70, h: 60, color: "#ec4899" },
+    { x: 230, z: 150, w: 90, h: 70, color: "#60a5fa" },
+    { x: 200, z: 40, w: 100, h: 140, color: "#16a34a" }
+  ];
+  
+  const scale = 0.4;
+  const offsetX = 120;
+  const offsetY = 120;
+  
+  buildings.forEach(b => {
+    ctx.fillStyle = b.color;
+    ctx.fillRect(
+      offsetX + b.x * scale - (b.w * scale) / 2,
+      offsetY - b.z * scale - (b.h * scale) / 2,
+      b.w * scale,
+      b.h * scale
+    );
+  });
+  
+  // Draw roads
+  ctx.fillStyle = "#475569";
+  ctx.fillRect(offsetX + 25 * scale, offsetY - (-150) * scale, 250 * scale, 4);
+  ctx.fillRect(offsetX + 270 * scale - 2, offsetY - (-200) * scale, 4, 400 * scale);
+  
+  // Draw player
+  ctx.fillStyle = "#f59e0b";
+  ctx.beginPath();
+  ctx.arc(
+    offsetX + pos.x * scale,
+    offsetY - pos.z * scale,
+    4,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+  
+  // Draw direction indicator
+  const cam = document.querySelector("#player-cam");
+  if (cam) {
+    const rotation = cam.object3D.rotation.y;
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(offsetX + pos.x * scale, offsetY - pos.z * scale);
+    ctx.lineTo(
+      offsetX + pos.x * scale + Math.sin(rotation) * 8,
+      offsetY - pos.z * scale - Math.cos(rotation) * 8
+    );
+    ctx.stroke();
+  }
+}
+
+// Animation loop
+function animate() {
+  updateLocationInfo();
+  drawMinimap();
+  requestAnimationFrame(animate);
+}
+
+// Start animation when scene loads
+document.querySelector("#scene").addEventListener("loaded", () => {
+  animate();
+});
+
+// Keyboard shortcuts
+document.addEventListener("keydown", (e) => {
+  if (e.key === "p" || e.key === "P") {
+    toggleFly();
+  }
+});
+
+</script>
+
+</body>
+</html>
